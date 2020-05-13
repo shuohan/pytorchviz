@@ -19,8 +19,14 @@ def make_dot(x, model):
             require grad (TODO: make optional)
 
     """
-    x.requires_grad = True
-    var = model(x)
+    if isinstance(x, tuple):
+        for xx in x:
+            xx.requires_grad = True
+        var = model(*x)
+    else:
+        x.requires_grad = True
+        var = model(x)
+
     params = dict(model.named_parameters())
     param_map = {id(v): k for k, v in params.items()}
 
@@ -51,8 +57,8 @@ def make_dot(x, model):
     size_to_str = lambda x: tuple(x).__str__()
 
     if isinstance(var, tuple):
-        for i, v in var:
-            node_name = 'output_%d\n%s' % (i, size_to_str(v.size()))
+        for i, v in enumerate(var):
+            node_name = 'output%d\n%s' % (i, size_to_str(v.size()))
             dot.node(str(id(v)), node_name, fillcolor='darkolivegreen1')
     else:
         node_name = 'output\n%s' % size_to_str(var.size())

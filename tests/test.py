@@ -1,50 +1,74 @@
 #!/usr/bin/env python
 
 import torch
-from torch import nn
-from torchviz import make_dot
+from pytorchviz import make_dot
 
 
-def make_mlp_and_input():
-    model = nn.Sequential()
-    model.add_module('W0', nn.Linear(8, 16))
-    model.add_module('tanh', nn.Tanh())
-    model.add_module('W1', nn.Linear(16, 1))
+class MLP(torch.nn.Sequential):
+    def __init__(self):
+        super().__init__()
+        self.w0 = torch.nn.Linear(8, 16)
+        self.tanh = torch.nn.Tanh()
+        self.w1 = torch.nn.Linear(16, 1)
+
+
+class DoubleInputModel(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv = torch.nn.Conv2d(16, 8, 3, padding=1)
+        self.norm = torch.nn.BatchNorm2d(8)
+        self.activ = torch.nn.ReLU()
+    def forward(self, x1, x2):
+        x = torch.cat((x1, x2), dim=1)
+        out = self.conv(x)
+        out = self.norm(out)
+        out = self.activ(out)
+        out = out + x1
+        return out
+
+
+class DoublePropModel(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.mlp = MLP()
+    def forward(self, x):
+        y = self.mlp(x).mean()
+        grad, = torch.autograd.grad(y, x, create_graph=True, retain_graph=True)
+        y = grad.pow(2).mean() + y
+        return y
+
+
+def test_mlp():
     x = torch.randn(1, 8)
-    return model, x
-
-
-def make_double_backprop(x, model):
-    y = model(x).mean()
-    grad, = torch.autograd.grad(y, x, create_graph=True, retain_graph=True)
-    return grad.pow(2).mean() + y
-
-
-def test_mlp_make_dot():
-    model, x = make_mlp_and_input()
-    y = model(x)
-    dot = make_dot(y.mean(), params=dict(model.named_parameters()))
+    mlp = MLP()
+    dot = make_dot(x, mlp)
     dot.render('mlp')
 
 
-def test_double_backprop_make_dot():
-    model, x = make_mlp_and_input()
-    x.requires_grad = True
-    y = make_double_backprop(x, model)
-    params = dict(model.named_parameters())
-    params['x'] = x
-    dot = make_dot(y, params=params)
+def test_double_backprop_model():
+    x = torch.randn(1, 8)
+    dp = DoublePropModel()
+    dot = make_dot(x, dp)
     dot.render('double_backprop')
 
 
-def test_lstm_make_dot():
-    lstm_cell = nn.LSTMCell(128, 128)
+def test_lstm():
     x = torch.randn(1, 128)
-    dot = make_dot(lstm_cell(x), params=dict(lstm_cell.named_parameters()))
+    lstm_cell = torch.nn.LSTMCell(128, 128)
+    dot = make_dot(x, lstm_cell)
     dot.render('lstm')
 
 
+def test_double_input_model():
+    di = DoubleInputModel()
+    x1 = torch.randn(1, 8, 16, 16)
+    x2 = torch.randn(1, 8, 16, 16)
+    dot = make_dot((x1, x2), di)
+    dot.render('double_input', format='png')
+
+
 if __name__ == '__main__':
-    test_mlp_make_dot()
-    test_double_backprop_make_dot()
-    test_lstm_make_dot()
+    test_mlp()
+    test_double_backprop_model()
+    test_double_input_model()
+    test_lstm()
