@@ -37,4 +37,5 @@ dot = make_dot((x1, x2), di)
 ```
 
 Example output:
+
 <img alt="mlp" src="./tests/double_input.png">
