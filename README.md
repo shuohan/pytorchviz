@@ -1,29 +1,40 @@
-PyTorchViz
-=======
+# pytorchviz
 
-A small package to create visualizations of PyTorch execution graphs and traces.
+Create visualizations of PyTorch execution graphs. This package is modified from [torchviz](https://github.com/szagoruyko/pytorchviz).
 
 ## Installation
 
-Install graphviz, e.g.:
+* Install `graphviz` from the package manager such as `yum` and `apt`.
 
-```
-brew install graphviz
-```
-
-Install the package itself:
-
-```
-pip install torchviz
-```
-
+* Install this package:
+    ```bash
+    pip install git+https://github.com/shuohan/pytorchviz
+    ```
 
 ## Usage
 
-<img width="891" alt="screen shot 2018-01-30 at 16 13 01" src="https://user-images.githubusercontent.com/4953728/35574234-8780297e-05d9-11e8-8e80-f4009297cefd.png">
+```python
+import torch
 
-There are two functions, `make_dot` to make graphs from any PyTorch functions (requires that at least one input Variable requires_grad), and `make_dot_from_trace` that uses outputs of `torch.jit.trace` (does not always work). See [examples.ipynb](examples.ipynb).
+class DoubleInputModel(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv = torch.nn.Conv2d(16, 8, 3, padding=1)
+        self.norm = torch.nn.BatchNorm2d(8)
+        self.activ = torch.nn.ReLU()
+    def forward(self, x1, x2):
+        x = torch.cat((x1, x2), dim=1)
+        out = self.conv(x)
+        out = self.norm(out)
+        out = self.activ(out)
+        out = out + x1
+        return out
 
-## Acknowledgements
+di = DoubleInputModel()
+x1 = torch.randn(1, 8, 16, 16)
+x2 = torch.randn(1, 8, 16, 16)
+dot = make_dot((x1, x2), di)
+```
 
-The script was moved from [functional-zoo](https://github.com/szagoruyko/functional-zoo) where it was created with the help of Adam Paszke, Soumith Chintala, Anton Osokin, and uses bits from [tensorboard-pytorch](https://github.com/lanpa/tensorboard-pytorch).
+Example output:
+<img alt="mlp" src="./tests/double_input.png">
