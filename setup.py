@@ -1,33 +1,14 @@
-#!/usr/bin/env python
-import os
-import shutil
-import sys
-from setuptools import setup, find_packages
+from distutils.core import setup
+from glob import glob
+import subprocess
 
-VERSION = '0.0.1'
+command = ['git', 'describe', '--tags']
+version = subprocess.check_output(command).decode().strip()
 
-long_description = ""
-
-setup_info = dict(
-    # Metadata
-    name='torchviz',
-    version=VERSION,
-    author='Sergey Zagoruyko',
-    author_email='sergey.zagoruyko@enpc.fr',
-    url='https://github.com/pytorch/pytorchviz',
-    description='A small package to create visualizations of PyTorch execution graphs',
-    long_description=long_description,
-    license='BSD',
-
-    # Package info
-    packages=find_packages(exclude=('test',)),
-
-    zip_safe=True,
-
-    install_requires=[
-        'torch',
-        'graphviz'
-    ]
-)
-
-setup(**setup_info)
+setup(name='pytorchviz',
+      version=version,
+      description='Create PyTorch execution graph.',
+      author='Shuo Han',
+      author_email='shan50@jhu.edu',
+      install_requires=['torch>=1.5.0'],
+      packages=['pytorchviz'])
