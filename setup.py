@@ -10,5 +10,4 @@ setup(name='pytorchviz',
       description='Create PyTorch execution graph.',
       author='Shuo Han',
       author_email='shan50@jhu.edu',
-      install_requires=['torch>=1.5.0'],
       packages=['pytorchviz'])
